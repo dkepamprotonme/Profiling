@@ -18,7 +18,7 @@ namespace GameOfLife
         private Canvas drawCanvas;
         private Ellipse[,] cellsVisuals;
 
-        
+
         public Grid(Canvas c)
         {
             drawCanvas = c;
@@ -28,7 +28,7 @@ namespace GameOfLife
             cells = new Cell[SizeX, SizeY];
             nextGenerationCells = new Cell[SizeX, SizeY];
             cellsVisuals = new Ellipse[SizeX, SizeY];
- 
+
             for (int i = 0; i < SizeX; i++)
                 for (int j = 0; j < SizeY; j++)
                 {
@@ -39,7 +39,7 @@ namespace GameOfLife
             SetRandomPattern();
             InitCellsVisuals();
             UpdateGraphics();
-            
+
         }
 
 
@@ -58,10 +58,10 @@ namespace GameOfLife
         void MouseMove(object sender, MouseEventArgs e)
         {
             var cellVisual = sender as Ellipse;
-            
+
             int i = (int) cellVisual.Margin.Left / 5;
             int j = (int) cellVisual.Margin.Top / 5;
-            
+
 
             if (e.LeftButton == MouseButtonState.Pressed)
             {
@@ -98,11 +98,11 @@ namespace GameOfLife
 
                     cellsVisuals[i, j].MouseMove += MouseMove;
                     cellsVisuals[i, j].MouseLeftButtonDown += MouseMove;
-                 }
+                }
             UpdateGraphics();
-                    
+
         }
-        
+
 
         public static bool GetRandomBoolean()
         {
@@ -115,7 +115,7 @@ namespace GameOfLife
                 for (int j = 0; j < SizeY; j++)
                     cells[i, j].IsAlive = GetRandomBoolean();
         }
-        
+
         public void UpdateToNextGeneration()
         {
             for (int i = 0; i < SizeX; i++)
@@ -127,51 +127,62 @@ namespace GameOfLife
 
             UpdateGraphics();
         }
-        
+
 
         public void Update()
         {
-            bool alive = false;
-            int age = 0;
+            //bool alive = false;
+            //int age = 0;
 
             for (int i = 0; i < SizeX; i++)
             {
                 for (int j = 0; j < SizeY; j++)
                 {
-//                    nextGenerationCells[i, j] = CalculateNextGeneration(i,j);          // UNOPTIMIZED
-                    CalculateNextGeneration(i, j, ref alive, ref age);   // OPTIMIZED
-                    nextGenerationCells[i, j].IsAlive = alive;  // OPTIMIZED
-                    nextGenerationCells[i, j].Age = age;  // OPTIMIZED
+                    CalculateNextGeneration(i, j);          // UNOPTIMIZED
+                    //CalculateNextGeneration(i, j, ref alive, ref age);   // OPTIMIZED
+                    //nextGenerationCells[i, j].IsAlive = alive;  // OPTIMIZED
+                    //nextGenerationCells[i, j].Age = age;  // OPTIMIZED
                 }
             }
             UpdateToNextGeneration();
         }
 
-        public Cell CalculateNextGeneration(int row, int column)    // UNOPTIMIZED
+        public void CalculateNextGeneration(int row, int column)    // UNOPTIMIZED
         {
-            bool alive;
-            int count, age;
+            bool isAlive = cells[row, column].IsAlive;
+            int count = CountNeighbors(row, column);
 
-            alive = cells[row, column].IsAlive;
-            age = cells[row, column].Age;
-            count = CountNeighbors(row, column);
-
-            if (alive && count < 2)
-                return new Cell(row, column, 0, false);
-            
-            if (alive && (count == 2 || count == 3))
+            if (isAlive && count < 2)
             {
-                cells[row, column].Age++;
-                return new Cell(row, column, cells[row, column].Age, true);
+                nextGenerationCells[row, column].Age = 0;
+                nextGenerationCells[row, column].IsAlive = false;
+                return;
             }
 
-            if (alive && count > 3)
-                return new Cell(row, column, 0, false);
-            
-            if (!alive && count == 3)
-                return new Cell(row, column, 0, true);
-            
-            return new Cell(row, column, 0, false);
+            if (isAlive && (count == 2 || count == 3))
+            {
+                cells[row, column].Age++;
+                nextGenerationCells[row, column].Age = cells[row, column].Age;
+                nextGenerationCells[row, column].IsAlive = true;
+                return;
+            }
+
+            if (isAlive && count > 3)
+            {
+                nextGenerationCells[row, column].Age = 0;
+                nextGenerationCells[row, column].IsAlive = false;
+                return;
+            }
+
+            if (!isAlive && count == 3)
+            {
+                nextGenerationCells[row, column].Age = 0;
+                nextGenerationCells[row, column].IsAlive = true;
+                return;
+            }
+
+            nextGenerationCells[row, column].Age = cells[row, column].Age;
+            nextGenerationCells[row, column].IsAlive = cells[row, column].IsAlive;
         }
 
         public void CalculateNextGeneration(int row, int column, ref bool isAlive, ref int age)     // OPTIMIZED
