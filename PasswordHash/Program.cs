@@ -6,22 +6,13 @@ namespace PasswordHash
     {
         private static void Main()
         {
-            var passwordText = "password";
-            var saltText = "saltsaltsaltsalt";
-            var salt = Encoding.UTF8.GetBytes(saltText);
-            var passwordHash = GeneratePasswordHashUsingSalt(passwordText, salt);
-            Console.WriteLine(passwordHash);
-        }
-        public static string GeneratePasswordHashUsingSalt(string passwordText, byte[] salt)
-        {
+            Span<byte> span = stackalloc byte[36];
+            Encoding.UTF8.GetBytes("saltsaltsaltsalt", span);
+            ReadOnlySpan<char> passwordText = "password".AsSpan();
             var iterate = 10000;
-            var pbkdf2 = new Rfc2898DeriveBytes(passwordText, salt, iterate);
-            byte[] hash = pbkdf2.GetBytes(20);
-            byte[] hashBytes = new byte[36];
-            Array.Copy(salt, 0, hashBytes, 0, 16);
-            Array.Copy(hash, 0, hashBytes, 16, 20);
-            var passwordHash = Convert.ToBase64String(hashBytes);
-            return passwordHash;
+            Rfc2898DeriveBytes.Pbkdf2(passwordText, span[..16], span.Slice(16, 20), iterate, HashAlgorithmName.SHA1);
+            var passwordHash = Convert.ToBase64String(span);
+            Console.WriteLine(passwordHash);
         }
     }
 }
